@@ -14,7 +14,7 @@ Für diese Modelle werden evolutionäre Spiele, im Wesentlichen Kooperationsspie
 Es werden primär Kooperationsspiele (CG) betrachtet.
 Außerdem sind MSIUR und LogUR für das Spiel Schere-Stein-Papier (RPS) implementiert.
 
-# Monte-Carlo-Simulationen
+# Monte-Carlo-Simulationen (MCS)
 Die Simulationsprogramme sind für zwei Communities ausgelegt.
 - SIUR: Die Monte-Carlo-Simulation approximiert die Absorptionswahrscheinlichkeiten ausgehend von den Startzuständen
 - MSIUR, LogUR: Die Monte-Carlo-Simulationen approximieren die stationäre Verteilung

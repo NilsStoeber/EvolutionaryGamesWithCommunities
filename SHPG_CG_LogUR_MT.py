@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 '''
-Rate-Of-Change Vektorfeld f�r Kooperationsspiele in 2 Communities
+Rate-Of-Change Vektorfeld für Kooperationsspiele in 2 Communities
 Update-Regel: Logit-Regel mit Boltzman-Funktion
 
-In Konsistenz mit den anderen Dateien f�r diese Update-Regel
-ist diese Datei ebenfalls nur f�r 2 Communities und 2 Strategien aufgesetzt.
+In Konsistenz mit den anderen Dateien für diese Update-Regel
+ist diese Datei ebenfalls nur für 2 Communities und 2 Strategien aufgesetzt.
 '''
 
 #%% Imports
@@ -17,14 +17,14 @@ from sys import exit
 
 #%% Parameter-Initialisierung
 
-# Anzahl Strategien, nicht ändern!
+# Anzahl Strategien, nicht Ã¤ndern!
 n_strat = 2
 
 # Auszahlungsparameter
-par_R = np.array([6,6])  
+par_R = np.array([8,5])  
 par_S = np.array([0,0])
-par_T = np.array([3,3])
-par_P = np.array([3,3])
+par_T = np.array([3,6])
+par_P = np.array([3,1])
 '''
 Option, die Nash-Gleichgewichte pro Community darzustellen
 Game-Types:
@@ -33,14 +33,14 @@ Game-Types:
  - 'PD' Prisoners Dilemma/Gefangenendilemma     T > R > P > S
 '''
 plot_nasheq = True
-game_type = ['SH', 'SH']
+game_type = ['SH', 'PD']
 
 n = np.size(par_R)
 
 # Zufallsparameter (Niedrig = Niedriger Zufallsfaktor, Hoch = Hoher Zufallsfaktor)
 K_randomness = 0.35
 
-# Größen der Population und Communities
+# GrÃ¶Ãen der Population und Communities
 N = 200
 N_i = np.repeat(N//n, n)
 #N_i = np.array([100,50])       #Option Custom Populationseinstellung
@@ -48,7 +48,7 @@ N = np.sum(N_i)
 states = np.prod(N_i+1)
 
 if n != N_i.size:
-    print("FEHLER: Bitte die Anzahl von Auszahlungsparametern und Communities gleich wählen!")
+    print("FEHLER: Bitte die Anzahl von Auszahlungsparametern und Communities gleich wÃ¤hlen!")
     exit()
     
 # Interaktionsparameter
@@ -58,7 +58,7 @@ par_lambda = param_inter * np.ones((n,n)) + (param_intra-param_inter) * np.eye(n
 param_total = N_i.T @ par_lambda @ N_i
 
 if par_lambda.shape != (n,n):
-    print("FEHLER: Bitte die Matrix der Interaktionsparameter passend zur Anzahl der Communities wählen!")
+    print("FEHLER: Bitte die Matrix der Interaktionsparameter passend zur Anzahl der Communities wÃ¤hlen!")
     exit()
     
 A = np.array([[par_R, par_S], [par_T, par_P]])
@@ -72,9 +72,20 @@ if A.shape != (n,n_strat,n_strat):
 
 #%% Hilfsfunktionen
 
-# Logit-Regel (x: Kandidat neue Strategie, y: Andere Strategie)
-def F(y,x):
-    return np.exp(x/K_randomness)/(np.exp(x/K_randomness)+np.exp(y/K_randomness))
+#Variante mit Berücksichtigung der anderen Communities
+'''
+def F(k,j,pi):
+    new_strat = 1-(k%n_strat)
+    
+    return par_lambda[k//n_strat]@np.exp(pi[new_strat::n_strat]/K_randomness).T/ sum([(par_lambda[k//n_strat]@np.exp(pi[i::n_strat]/K_randomness).T) for i in range(n_strat)])
+'''
+
+#Normale Logit-Regel
+def F(k,j,pi):
+    new_strat = 1-(k%n_strat)
+    
+    return np.exp(pi[n_strat*(k//n_strat) + new_strat]/K_randomness).T/ sum([np.exp(pi[n_strat*(k//n_strat) + i]/K_randomness).T for i in range(n_strat)])
+
 
 # Auszahlung der reinen Strategien gegen die aktuelle Population
 def updatepi(f):     
@@ -86,15 +97,15 @@ def p(f,pi,k):
     j = 2*i + 1-(k%2)
     lambda_i = N_i.T@par_lambda[i]
     
-    prob = lambda_i * f[k] / param_total * F(pi[k],pi[j])
+    prob = lambda_i * f[k] / param_total * F(k,j,pi)
     return prob
 
-# Übergangsrate, dass jemand aus Community i (=k//2) und Strategie C (k%2==0) bzw D (k%2==1) zur anderen Strategie wechselt
+# Ãbergangsrate, dass jemand aus Community i (=k//2) und Strategie C (k%2==0) bzw D (k%2==1) zur anderen Strategie wechselt
 def q(f,pi,k):
     i = k//2
     j = 2*i + 1-(k%2)
     lambda_i = N_i.T@par_lambda[i]
-    lambda_i_mod = lambda_i * F(pi[k],pi[j])
+    lambda_i_mod = lambda_i * F(k,j,pi)
     return lambda_i_mod * f[k]
 
 def createQ(f):

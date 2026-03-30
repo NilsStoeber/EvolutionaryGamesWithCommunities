@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 '''
-Rate-Of-Change Vektorfeld f�r Kooperationsspiele in 2 Communities
-Update-Regel: Gegl�ttete Imitation mit Sigmoid-Funktion
+Rate-Of-Change Vektorfeld für Kooperationsspiele in 2 Communities
+Update-Regel: Geglättete Imitation mit Sigmoid-Funktion
 
-In Konsistenz mit den anderen Dateien f�r diese Update-Regel
-ist diese Datei ebenfalls nur f�r 2 Communities und 2 Strategien aufgesetzt.
+In Konsistenz mit den anderen Dateien für diese Update-Regel
+ist diese Datei ebenfalls nur für 2 Communities und 2 Strategien aufgesetzt.
 '''
 
 #%% Imports
@@ -18,14 +18,14 @@ from sys import exit
 
 #%% Parameter-Initialisierung
 
-# Anzahl Strategien, nicht �ndern!
+# Anzahl Strategien, nicht ändern!
 n_strat = 2
 
 # Auszahlungsparameter
-par_R = np.array([6,6])  
+par_R = np.array([8,5])  
 par_S = np.array([0,0])
-par_T = np.array([3,3])
-par_P = np.array([3,3])
+par_T = np.array([3,6])
+par_P = np.array([3,1])
 
 '''
 Option, die Nash-Gleichgewichte pro Community darzustellen
@@ -35,7 +35,7 @@ Game-Types:
  - 'PD' Prisoners Dilemma/Gefangenendilemma     T > R > P > S
 '''
 plot_nasheq = True
-game_type = ['SH', 'SH']
+game_type = ['SH', 'PD']
 
 n = np.size(par_R)
 
@@ -43,7 +43,7 @@ n = np.size(par_R)
 K_randomness = 1
 random_drift = 0.1
 
-# Gr�ߟen der Population und Communities
+# Größen der Population und Communities
 N = 200
 N_i = np.repeat(N//n, n)
 #N_i = np.array([100,150])       #Option Custom Populationseinstellung
@@ -51,7 +51,7 @@ N = np.sum(N_i)
 states = np.prod(N_i+1)
 
 if n != N_i.size:
-    print("FEHLER: Bitte die Anzahl von Auszahlungsparametern und Communities gleich w�hlen!")
+    print("FEHLER: Bitte die Anzahl von Auszahlungsparametern und Communities gleich wählen!")
     exit()
     
 # Interaktionsparameter
@@ -61,7 +61,7 @@ par_lambda = param_inter * np.ones((n,n)) + (param_intra-param_inter) * np.eye(n
 param_total = N_i.T @ par_lambda @ N_i
 
 if par_lambda.shape != (n,n):
-    print("FEHLER: Bitte die Matrix der Interaktionsparameter passend zur Anzahl der Communities w�hlen!")
+    print("FEHLER: Bitte die Matrix der Interaktionsparameter passend zur Anzahl der Communities wählen!")
     exit()
     
     
@@ -95,11 +95,11 @@ def p(f,pi,k):
         prob += par_lambda[k//n_strat,j]*f[k]*f[l]/param_total*F(pi[k],pi[l])
     return prob
 
-# ܜbergangsrate, dass jemand aus Community i (=k//2) und Strategie C (k%2==0) bzw D (k%2==1) zur anderen Strategie wechselt
+# Übergangsrate, dass jemand aus Community i (=k//2) und Strategie C (k%2==0) bzw D (k%2==1) zur anderen Strategie wechselt
 def q(f,pi,k):
     return param_total * p(f,pi,k) + 1/n_strat*random_drift*N_i.T@par_lambda[k//n_strat]*f[k]
 
-# ܜbergangsraten f�r den Zustand f
+# Übergangsraten für den Zustand f
 def createQ(f):
     rates = np.zeros((n_strat*(n_strat-1)*n+1))
     pi = updatepi(f)
@@ -108,7 +108,7 @@ def createQ(f):
     rates[-1] = -sum(rates)
     return rates
 
-# ܜbergangsraten f�r alle Zust�nde
+# Übergangsraten für alle Zustände
 def createQFull():
     Q = np.zeros((states, (n_strat*(n_strat-1)*n+1)))
     for j in range(states):
@@ -118,14 +118,14 @@ def createQFull():
         Q[j,:] = createQ(f)
     return Q
 
-# Bereinigte ܜbergangswahrscheinlichkeiten f�r den Zustand f
+# Bereinigte Übergangswahrscheinlichkeiten für den Zustand f
 def createPi(f):
     probs = createQ(f)
     if abs(probs[-1]) > 10e-10:
         probs = probs/probs[-1]
     return probs
 
-# Bereinigte ܜbergangswahrscheinlichkeiten f�r alle Zust�nde
+# Bereinigte Übergangswahrscheinlichkeiten für alle Zustände
 def createPiFull():
     P = np.zeros((states, n_strat*(n_strat-1)*n+1))
     for j in range(states):
@@ -143,7 +143,7 @@ def plotVF(vecscale = 3.0, plot_NE = plot_nasheq):
     
     # Verweilparameter
     Qdiag = -Q[:,-1].reshape((N_i[0]+1,N_i[1]+1))
-    # Effektive Ver�nderungsrate (Verweilparameter * 1-Norm des n�chsten ܜbergangs)
+    # Effektive Veränderungsrate (Verweilparameter * 1-Norm des nächsten Übergangs)
     Qdirec = np.copy(Qdiag)
     
     x,y = np.meshgrid(np.linspace(0.5,N_i[1]+0.5,N_i[1]+1),np.linspace(0.5,N_i[0]+0.5,N_i[0]+1))
